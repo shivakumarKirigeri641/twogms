@@ -1,0 +1,27 @@
+{
+  "name": "twogms",
+  "version": "1.0.0",
+  "description": "Two wheeler online garage management system to handle vehicle servcing",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shivakumarKirigeri641/twogms.git"
+  },
+  "author": "Shiva, Amruta, Suhas",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/shivakumarKirigeri641/twogms/issues"
+  },
+  "homepage": "https://github.com/shivakumarKirigeri641/twogms#readme",
+  "dependencies": {
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.16.4",
+    "validator": "^13.15.15"
+  }
+}
