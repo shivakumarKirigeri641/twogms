@@ -2,15 +2,21 @@ const express = require("express");
 const argon2 = require("argon2");
 const validator = require("validator");
 const getGarageId = require("../utils/getGarageId");
-const gms_registration_model = require("../models/gms_registration_model");
+const registration = require("../models/registration");
 const registrationRouter = express.Router();
 registrationRouter.post("/twogms/register", async (req, res) => {
   try {
-    const result = new gms_registration_model({
+    const resultreg = await registration.find({});
+    let id = 1;
+    if (resultreg) {
+      id = resultreg.length + 1;
+    }
+    console.log(id);
+    const result = new registration({
       garageName: req.body.garageName,
       ownerName: req.body.ownerName,
       phoneNumber: req.body.phoneNumber,
-      garageId: "ssmotors",
+      tenentId: id,
       password: await argon2.hash(req.body.password),
     });
     await result.save();

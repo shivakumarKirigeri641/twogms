@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const gms_registration_modelSchema = mongoose.Schema({
+const registrationSchema = mongoose.Schema({
   garageName: {
     type: String,
     required: true,
@@ -33,17 +33,14 @@ const gms_registration_modelSchema = mongoose.Schema({
     type: String,
     default: "",
   },
-  garageId: {
-    type: String,
-    default: "",
+  tenentId: {
+    type: Number,
+    unique: true,
   },
   password: {
     type: String,
     default: "",
   },
 });
-const gms_registration_model = mongoose.model(
-  "gms_registration_model",
-  gms_registration_modelSchema
-);
-module.exports = gms_registration_model;
+const registration = mongoose.model("registration", registrationSchema);
+module.exports = registration;

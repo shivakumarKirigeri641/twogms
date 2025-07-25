@@ -3,6 +3,8 @@ const connectDB = require("./database/connectDB");
 const express = require("express");
 const app = new express();
 const registrationRouter = require("./routers/registrationRouter");
+const authRouter = require("./routers/authRouter");
+const serviceRouter = require("./routers/serviceRouter");
 const cors = require("cors");
 app.use(cookieParser());
 app.use(express.json());
@@ -13,6 +15,8 @@ app.use(
   })
 );
 app.use("/", registrationRouter);
+app.use("/", authRouter);
+app.use("/", serviceRouter);
 connectDB()
   .then(() => {
     console.log("gms Database connected successfully....");
