@@ -2,6 +2,7 @@ const cookieParser = require("cookie-parser");
 const connectDB = require("./database/connectDB");
 const express = require("express");
 const app = new express();
+const registrationRouter = require("./routers/registrationRouter");
 const cors = require("cors");
 app.use(cookieParser());
 app.use(express.json());
@@ -11,9 +12,7 @@ app.use(
     credentials: true,
   })
 );
-app.use("/", async (req, res) => {
-  res.send("test");
-});
+app.use("/", registrationRouter);
 connectDB()
   .then(() => {
     console.log("gms Database connected successfully....");

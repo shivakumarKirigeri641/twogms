@@ -18,6 +18,7 @@
   },
   "homepage": "https://github.com/shivakumarKirigeri641/twogms#readme",
   "dependencies": {
+    "argon2": "^0.43.1",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^17.2.1",
