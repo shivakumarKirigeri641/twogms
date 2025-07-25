@@ -38,4 +38,5 @@ const vehicleDataSchema = mongoose.Schema(
   }
 );
 vehicleDataSchema.index({ vehicleNumber: 1 });
-module.exports = vehicleDataSchema;
+const VehicleData = mongoose.model("VehicleData", vehicleDataSchema);
+module.exports = VehicleData;
