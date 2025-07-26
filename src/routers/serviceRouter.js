@@ -122,7 +122,7 @@ serviceRouter.get(
 );
 //fetch full service details on a given vehicle id from service data
 serviceRouter.get(
-  "/twogms/feed/getvehicledetails/:vehicleId",
+  "/twogms/feed/getfullvehicledetails/:vehicleId",
   checkAuthentication,
   async (req, res) => {
     let data = [];
@@ -224,6 +224,130 @@ serviceRouter.get(
             servicePaymentsIdinfo,
           };
         })
+      );
+      const resultdata = {
+        vehicleAndCustomer: allinfo.vehicleDataId,
+        servicelist: data,
+      };
+      res.status(200).json({
+        status: "Ok",
+        resultdata,
+      });
+    } catch (err) {
+      res.status(401).json({ status: "Failed", message: err.message });
+    }
+  }
+);
+//fetch latest service details on a given vehicle id from service data
+serviceRouter.get(
+  "/twogms/feed/getlatestvehicledetails/:vehicleId",
+  checkAuthentication,
+  async (req, res) => {
+    let data = [];
+    try {
+      const vehicleId = req.params.vehicleId;
+      if (!vehicleId) {
+        throw new Error("Invalid vehicle information provided!");
+      }
+      //fetch vehicle information
+      const ServiceData = getTenantModel(
+        req.credentialData.tenentId,
+        serviceDataSchema,
+        "ServiceData"
+      );
+      const isvehicleidvalid = await ServiceData.findOne({
+        vehicleDataId: vehicleId,
+      });
+      if (!isvehicleidvalid) {
+        throw new Error("Invalid vehicle information provided!");
+      }
+      const customerComplaints = getTenantModel(
+        req.credentialData.tenentId,
+        customerComplaintsSchema,
+        "customerComplaints"
+      );
+      //afterServiceComplaintsId
+      const afterServiceComplaints = getTenantModel(
+        req.credentialData.tenentId,
+        afterServiceComplaintsSchema,
+        "afterServiceComplaints"
+      );
+      //mechanicObservationsId
+      const mechanicObservations = getTenantModel(
+        req.credentialData.tenentId,
+        mechanicObservationsSchema,
+        "mechanicObservations"
+      );
+      //partsAndAccessoriesId
+      const partsAndAccessories = getTenantModel(
+        req.credentialData.tenentId,
+        partsAndAccessoriesSchema,
+        "partsAndAccessories"
+      );
+      //StandardServicesCheckListId
+      const standardServicesCheckList = getTenantModel(
+        req.credentialData.tenentId,
+        standardServicesCheckListSchema,
+        "standardServicesCheckList"
+      );
+      //servicePaymentsId
+      const servicePayments = getTenantModel(
+        req.credentialData.tenentId,
+        servicePaymentsSchema,
+        "servicePayments"
+      );
+      let allinfo = await ServiceData.findOne({ vehicleDataId: vehicleId })
+        .populate({
+          path: "vehicleDataId",
+          populate: {
+            path: "customerId",
+          },
+        })
+        .populate({
+          path: "vehicleDataId",
+          populate: {
+            path: "variantId",
+          },
+        });
+      //do it manual
+      const data = await Promise.all(
+        allinfo?.list
+          ?.filter(
+            (service) =>
+              service.serviceSequenceNumber === allinfo?.list?.length - 1
+          )
+          .map(async (service) => {
+            const customerComplaintsinfo = await customerComplaints.findById(
+              service.customerComplaintsId
+            );
+            const afterServiceComplaintsinfo =
+              await afterServiceComplaints.findById(
+                service.afterServiceComplaintsId
+              );
+            const mechanicObservationsIdinfo =
+              await mechanicObservations.findById(
+                service.mechanicObservationsId
+              );
+            //
+            const servicePaymentsIdinfo = await servicePayments.findById(
+              service.servicePaymentsId
+            );
+            const StandardServicesCheckListIdinfo =
+              await standardServicesCheckList.findById(
+                service.StandardServicesCheckListId
+              );
+            const partsAndAccessoriesIdinfo =
+              await partsAndAccessories.findById(service.partsAndAccessoriesId);
+            return {
+              service,
+              customerComplaintsinfo,
+              afterServiceComplaintsinfo,
+              mechanicObservationsIdinfo,
+              partsAndAccessoriesIdinfo,
+              StandardServicesCheckListIdinfo,
+              servicePaymentsIdinfo,
+            };
+          })
       );
       const resultdata = {
         vehicleAndCustomer: allinfo.vehicleDataId,
@@ -384,12 +508,10 @@ serviceRouter.post(
           await currentgaragevehicledetails.save();
         }
       }
-      res
-        .status(200)
-        .json({
-          status: "Ok",
-          message: "Vehicle added to service successfully.",
-        });
+      res.status(200).json({
+        status: "Ok",
+        message: "Vehicle added to service successfully.",
+      });
     } catch (err) {
       res.status(403).json({ status: "Failed", message: err.message });
     }
