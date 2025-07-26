@@ -52,5 +52,5 @@ const customerDataSchema = mongoose.Schema(
   }
 );
 customerDataSchema.index({ customerName: 1 });
-const CustomerData = mongoose.model("CustomerData", customerDataSchema);
-module.exports = CustomerData;
+const customerData = mongoose.model("customerData", customerDataSchema);
+module.exports = customerData;

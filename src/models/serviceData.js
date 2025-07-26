@@ -1,6 +1,11 @@
 const mongoose = require("mongoose");
 const serviceDataSchema = mongoose.Schema(
   {
+    vehicleDataId: {
+      type: String,
+      ref: "VehicleData",
+      required: true,
+    },
     list: {
       type: [
         {
@@ -81,7 +86,7 @@ const serviceDataSchema = mongoose.Schema(
           customerComplaintsId: {
             type: mongoose.Schema.Types.ObjectId,
             required: true,
-            ref: "customerComplaints",
+            ref: "customerComplaintsSchema",
           },
           mechanicObservationsId: {
             type: mongoose.Schema.Types.ObjectId,

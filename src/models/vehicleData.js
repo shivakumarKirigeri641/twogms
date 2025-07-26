@@ -20,7 +20,7 @@ const vehicleDataSchema = mongoose.Schema(
     customerId: {
       type: mongoose.Schema.Types.ObjectId,
       required: true,
-      ref: "CustomerData",
+      ref: "customerData",
     },
     serviceDataId: {
       type: mongoose.Schema.Types.ObjectId,
