@@ -486,6 +486,7 @@ serviceRouter.post(
             ],
           });
           await newservice.save();
+          currentgaragevehicledetails = newservice;
         } else {
           //already vehicle came to service previously
           //->push new item to list with service Date
@@ -511,6 +512,7 @@ serviceRouter.post(
       res.status(200).json({
         status: "Ok",
         message: "Vehicle added to service successfully.",
+        data: currentgaragevehicledetails,
       });
     } catch (err) {
       res.status(403).json({ status: "Failed", message: err.message });
