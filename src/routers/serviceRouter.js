@@ -4,8 +4,8 @@ const customerComplaintsSchema = require("../models/customerComplaints");
 const afterServiceComplaintsSchema = require("../models/afterServiceComplaints");
 const mechanicObservationsSchema = require("../models/mechanicObservations");
 const partsAndAccessoriesSchema = require("../models/partsAndAccessories");
+const standardServicesCheckListSchema = require("../models/standardServicesCheckList");
 const servicePaymentsSchema = require("../models/servicePayments");
-const StandardServicesCheckListSchema = require("../models/standardServicesCheckList");
 const serviceDataSchema = require("../models/serviceData");
 const checkAuthentication = require("../routers/middlewares/checkAuthentication");
 const ServiceData = require("../models/serviceData");
@@ -120,7 +120,7 @@ serviceRouter.get(
     }
   }
 );
-//fetch full service details on a given vehicle number
+//fetch full service details on a given vehicle id from service data
 serviceRouter.get(
   "/twogms/feed/getvehicledetails/:vehicleId",
   checkAuthentication,
@@ -131,10 +131,52 @@ serviceRouter.get(
       if (!vehicleId) {
         throw new Error("Invalid vehicle information provided!");
       }
+      //fetch vehicle information
       const ServiceData = getTenantModel(
         req.credentialData.tenentId,
         serviceDataSchema,
         "ServiceData"
+      );
+      const isvehicleidvalid = await ServiceData.findOne({
+        vehicleDataId: vehicleId,
+      });
+      if (!isvehicleidvalid) {
+        throw new Error("Invalid vehicle information provided!");
+      }
+      const customerComplaints = getTenantModel(
+        req.credentialData.tenentId,
+        customerComplaintsSchema,
+        "customerComplaints"
+      );
+      //afterServiceComplaintsId
+      const afterServiceComplaints = getTenantModel(
+        req.credentialData.tenentId,
+        afterServiceComplaintsSchema,
+        "afterServiceComplaints"
+      );
+      //mechanicObservationsId
+      const mechanicObservations = getTenantModel(
+        req.credentialData.tenentId,
+        mechanicObservationsSchema,
+        "mechanicObservations"
+      );
+      //partsAndAccessoriesId
+      const partsAndAccessories = getTenantModel(
+        req.credentialData.tenentId,
+        partsAndAccessoriesSchema,
+        "partsAndAccessories"
+      );
+      //StandardServicesCheckListId
+      const standardServicesCheckList = getTenantModel(
+        req.credentialData.tenentId,
+        standardServicesCheckListSchema,
+        "standardServicesCheckList"
+      );
+      //servicePaymentsId
+      const servicePayments = getTenantModel(
+        req.credentialData.tenentId,
+        servicePaymentsSchema,
+        "servicePayments"
       );
       let allinfo = await ServiceData.findOne({ vehicleDataId: vehicleId })
         .populate({
@@ -150,15 +192,39 @@ serviceRouter.get(
           },
         });
       //do it manual
-      if (!allinfo) {
-        throw new Error("Vehicle details not found!");
-      }
-      data = {
-        vehicleNumber: allinfo.vehicleDataId.vehicleNumber,
-        vehicleInfo: allinfo.vehicleDataId.variantId,
-        customerInfo: allinfo.vehicleDataId.customerId,
-        list: allinfo.list,
-      };
+      const data = await Promise.all(
+        allinfo?.list.map(async (service) => {
+          const customerComplaintsinfo = await customerComplaints.findById(
+            service.customerComplaintsId
+          );
+          const afterServiceComplaintsinfo =
+            await afterServiceComplaints.findById(
+              service.afterServiceComplaintsId
+            );
+          const mechanicObservationsIdinfo =
+            await mechanicObservations.findById(service.mechanicObservationsId);
+          //
+          const servicePaymentsIdinfo = await servicePayments.findById(
+            service.servicePaymentsId
+          );
+          const StandardServicesCheckListIdinfo =
+            await standardServicesCheckList.findById(
+              service.StandardServicesCheckListId
+            );
+          const partsAndAccessoriesIdinfo = await partsAndAccessories.findById(
+            service.partsAndAccessoriesId
+          );
+          return {
+            service,
+            customerComplaintsinfo,
+            afterServiceComplaintsinfo,
+            mechanicObservationsIdinfo,
+            partsAndAccessoriesIdinfo,
+            StandardServicesCheckListIdinfo,
+            servicePaymentsIdinfo,
+          };
+        })
+      );
       res.status(200).json({
         status: "Ok",
         data,
