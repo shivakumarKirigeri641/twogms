@@ -248,9 +248,12 @@ serviceRouter.post(
         vehicleNumber,
         variantId,
         customerName,
+        fuelAtService,
         primaryMobileNumber,
+        kmDriven,
         preferredMobileNumber,
         address,
+        isElectric,
         email,
       } = req.body;
       if (
@@ -261,6 +264,132 @@ serviceRouter.post(
       ) {
         throw new Error("Information is not valid!");
       }
+      //first search in 'twowheeler master list'.
+      //get all schemas and add empty details to them.
+      const ServiceData = getTenantModel(
+        tenentid,
+        serviceDataSchema,
+        "ServiceData"
+      );
+      const afterServiceComplaints = getTenantModel(
+        tenentid,
+        afterServiceComplaintsSchema,
+        "afterServiceComplaints"
+      );
+      const afterServiceComplaintsinfo = await afterServiceComplaints.save();
+      const customerComplaints = getTenantModel(
+        tenentid,
+        customerComplaintsSchema,
+        "customerComplaints"
+      );
+      const customerComplaintsinfo = await customerComplaints.save();
+      const mechanicObservations = getTenantModel(
+        tenentid,
+        mechanicObservationsSchema,
+        "mechanicObservations"
+      );
+      const mechanicObservationsinfo = await mechanicObservations.save();
+      const partsAndAccessories = getTenantModel(
+        tenentid,
+        partsAndAccessoriesSchema,
+        "partsAndAccessories"
+      );
+      const partsAndAccessoriesinfo = await partsAndAccessories.save();
+      const servicePayments = getTenantModel(
+        tenentid,
+        servicePaymentsSchema,
+        "servicePayments"
+      );
+      const servicePaymentsinfo = await servicePayments.save();
+      const standardServicesCheckList = getTenantModel(
+        tenentid,
+        standardServicesCheckListSchema,
+        "standardServicesCheckList"
+      );
+      const standardServicesCheckListinfo =
+        await standardServicesCheckList.save();
+      let resultcustomer = null;
+      let resultnewvehicledetails = null;
+      resultnewvehicledetails = await VehicleData.findOne({
+        vehicleNumber,
+      });
+      if (!resulttwowheelermaster) {
+        //data not present in master list itself
+        //1. first add customer details
+        const customer = new customerData({
+          customerName,
+          primaryMobileNumber,
+          address,
+          email,
+        });
+        resultcustomer = await customer.save();
+        //isnert vehicledata
+        const newvehicledetails = new VehicleData({
+          variantId,
+          customerId: resultcustomer._id,
+          isElectric,
+          vehicleNumber,
+        });
+        resultnewvehicledetails = await newvehicledetails.save();
+      } else {
+        //search if curretn garage have this vehicle history
+        const currentgaragevehicledetails = await ServiceData.findOne({
+          vehicleDataId: resulttwowheelermaster._id,
+        });
+        if (!currentgaragevehicledetails) {
+          //current garage don't have history
+          //->add new serviceData
+          const newservice = new ServiceData({
+            vehicleDataId: resultnewvehicledetails._id,
+            list: [
+              {
+                kmDriven,
+                dateOfVehicleEntry: new Date(Date.now()),
+                dateOfVehicleExit: new Date(Date.now()),
+                kmForNextService: kmDriven + 2500,
+                dateForNextService: date.setDate(new Date().getDate() + 50),
+                serviceSequenceNumber: 1,
+                isLatestService: true,
+                fuelPercentBeforeService: fuelAtService,
+                afterServiceComplaintsId: afterServiceComplaintsinfo._id,
+                customerComplaintsId: customerComplaintsinfo._id,
+                mechanicObservationsId: mechanicObservationsinfo._id,
+                partsAndAccessoriesId: partsAndAccessoriesinfo._id,
+                servicePaymentsId: servicePaymentsinfo._id,
+                StandardServicesCheckListId:
+                  StandardServicesCheckListIdinfo._id,
+              },
+            ],
+          });
+          await newservice.save();
+        } else {
+          //already vehicle came to service previously
+          //->push new item to list with service Date
+          currentgaragevehicledetails.list.push({
+            kmDriven,
+            dateOfVehicleEntry: new Date(Date.now()),
+            dateOfVehicleExit: new Date(Date.now()),
+            kmForNextService: kmDriven + 2500,
+            dateForNextService: date.setDate(new Date().getDate() + 50),
+            serviceSequenceNumber: 1,
+            isLatestService: true,
+            fuelPercentBeforeService: fuelAtService,
+            afterServiceComplaintsId: afterServiceComplaintsinfo._id,
+            customerComplaintsId: customerComplaintsinfo._id,
+            mechanicObservationsId: mechanicObservationsinfo._id,
+            partsAndAccessoriesId: partsAndAccessoriesinfo._id,
+            servicePaymentsId: servicePaymentsinfo._id,
+            StandardServicesCheckListId: StandardServicesCheckListIdinfo._id,
+          });
+          await currentgaragevehicledetails.save();
+        }
+      }
+      res
+        .status(200)
+        .json({
+          status: "Ok",
+          message: "Vehicle added to service successfully.",
+        });
     } catch (err) {
       res.status(403).json({ status: "Failed", message: err.message });
     }
