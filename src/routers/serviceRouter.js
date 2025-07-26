@@ -225,12 +225,44 @@ serviceRouter.get(
           };
         })
       );
+      const resultdata = {
+        vehicleAndCustomer: allinfo.vehicleDataId,
+        servicelist: data,
+      };
       res.status(200).json({
         status: "Ok",
-        data,
+        resultdata,
       });
     } catch (err) {
       res.status(401).json({ status: "Failed", message: err.message });
+    }
+  }
+);
+//post new vehicle to respective garage
+serviceRouter.post(
+  "/twogms/addnewvehicle",
+  checkAuthentication,
+  async (req, res) => {
+    try {
+      const {
+        vehicleNumber,
+        variantId,
+        customerName,
+        primaryMobileNumber,
+        preferredMobileNumber,
+        address,
+        email,
+      } = req.body;
+      if (
+        !vehicleNumber ||
+        !variantId ||
+        !customerName ||
+        !primaryMobileNumber
+      ) {
+        throw new Error("Information is not valid!");
+      }
+    } catch (err) {
+      res.status(403).json({ status: "Failed", message: err.message });
     }
   }
 );
