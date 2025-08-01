@@ -519,4 +519,150 @@ serviceRouter.post(
     }
   }
 );
+//fetch full service details on a given vehicle number from service data
+serviceRouter.get(
+  "/twogms/feed/searchvehicle/:vehiclenumber",
+  checkAuthentication,
+  async (req, res) => {
+    let data = [];
+    try {
+      let vehnum = req.params.vehiclenumber;
+      if (!vehnum) {
+        throw new Error("Invalid vehicle information provided!");
+      }
+      vehnum = vehnum.toUpperCase();
+      //fetch vehiclenumber from vehicledata
+      const currvehicleData = await VehicleData.findOne({
+        vehicleNumber: vehnum,
+      })
+        .populate({
+          path: "customerId",
+        })
+        .populate({
+          path: "variantId",
+        });
+      console.log(currvehicleData);
+      if (!currvehicleData) {
+        //throw new Error("Vehicle not found in db!");
+        return res.status(200).json({
+          status: "Ok",
+          message:
+            "Vehicle not found master list. You can add this as a new vehicle.",
+        });
+      }
+      //fetch vehicle information
+      const ServiceData = getTenantModel(
+        req.credentialData.tenentId,
+        serviceDataSchema,
+        "ServiceData"
+      );
+      const isvehicleidvalid = await ServiceData.findOne({
+        vehicleDataId: currvehicleData._id,
+      });
+      if (!isvehicleidvalid) {
+        //throw new Error("Vehicle not found in your garage list!");
+        return res.status(200).json({
+          status: "Ok",
+          message:
+            "Vehicle not found in your garage. You can add this as a new vehicle.",
+          data: currvehicleData,
+        });
+      }
+      const customerComplaints = getTenantModel(
+        req.credentialData.tenentId,
+        customerComplaintsSchema,
+        "customerComplaints"
+      );
+      //afterServiceComplaintsId
+      const afterServiceComplaints = getTenantModel(
+        req.credentialData.tenentId,
+        afterServiceComplaintsSchema,
+        "afterServiceComplaints"
+      );
+      //mechanicObservationsId
+      const mechanicObservations = getTenantModel(
+        req.credentialData.tenentId,
+        mechanicObservationsSchema,
+        "mechanicObservations"
+      );
+      //partsAndAccessoriesId
+      const partsAndAccessories = getTenantModel(
+        req.credentialData.tenentId,
+        partsAndAccessoriesSchema,
+        "partsAndAccessories"
+      );
+      //StandardServicesCheckListId
+      const standardServicesCheckList = getTenantModel(
+        req.credentialData.tenentId,
+        standardServicesCheckListSchema,
+        "standardServicesCheckList"
+      );
+      //servicePaymentsId
+      const servicePayments = getTenantModel(
+        req.credentialData.tenentId,
+        servicePaymentsSchema,
+        "servicePayments"
+      );
+      let allinfo = await ServiceData.findOne({
+        vehicleDataId: currvehicleData._id,
+      })
+        .populate({
+          path: "vehicleDataId",
+          populate: {
+            path: "customerId",
+          },
+        })
+        .populate({
+          path: "vehicleDataId",
+          populate: {
+            path: "variantId",
+          },
+        });
+      //do it manual
+      const data = await Promise.all(
+        allinfo?.list.map(async (service) => {
+          const customerComplaintsinfo = await customerComplaints.findById(
+            service.customerComplaintsId
+          );
+          const afterServiceComplaintsinfo =
+            await afterServiceComplaints.findById(
+              service.afterServiceComplaintsId
+            );
+          const mechanicObservationsIdinfo =
+            await mechanicObservations.findById(service.mechanicObservationsId);
+          //
+          const servicePaymentsIdinfo = await servicePayments.findById(
+            service.servicePaymentsId
+          );
+          const StandardServicesCheckListIdinfo =
+            await standardServicesCheckList.findById(
+              service.StandardServicesCheckListId
+            );
+          const partsAndAccessoriesIdinfo = await partsAndAccessories.findById(
+            service.partsAndAccessoriesId
+          );
+          return {
+            service,
+            customerComplaintsinfo,
+            afterServiceComplaintsinfo,
+            mechanicObservationsIdinfo,
+            partsAndAccessoriesIdinfo,
+            StandardServicesCheckListIdinfo,
+            servicePaymentsIdinfo,
+          };
+        })
+      );
+      const resultdata = {
+        vehicleAndCustomer: allinfo.vehicleDataId,
+        servicelist: data,
+      };
+      res.status(200).json({
+        status: "Ok",
+        resultdata,
+      });
+    } catch (err) {
+      res.status(401).json({ status: "Failed", message: err.message });
+    }
+  }
+);
 module.exports = serviceRouter;
