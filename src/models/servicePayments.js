@@ -2,25 +2,37 @@ const { default: mongoose } = require("mongoose");
 const itemDataSchema = require("./itemDataSchema");
 const servicePaymentsSchema = mongoose.Schema(
   {
-    amountPaid: {
+    totalBillGenerated: {
       type: Number,
       required: true,
       default: 0,
     },
-    dueAmount: {
+    payStatus: {
       type: Number,
-      default: 0,
-    },
-    cashPay: {
-      type: Number,
-      default: 0,
-    },
-    onlinePay: {
-      type: Number,
-      default: 0,
+      required: true,
+      default: -1,
     },
     list: {
-      type: [itemDataSchema],
+      type: [
+        {
+          amountPaid: {
+            type: Number,
+            required: true,
+            default: 0,
+          },
+          cashPay: {
+            type: Number,
+            default: 0,
+          },
+          onlinePay: {
+            type: Number,
+            default: 0,
+          },
+        },
+        {
+          timestamps: true,
+        },
+      ],
     },
   },
   {
