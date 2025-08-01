@@ -544,7 +544,7 @@ serviceRouter.get(
       console.log(currvehicleData);
       if (!currvehicleData) {
         //throw new Error("Vehicle not found in db!");
-        return res.status(200).json({
+        return res.status(204).json({
           status: "Ok",
           message:
             "Vehicle not found master list. You can add this as a new vehicle.",
@@ -561,7 +561,7 @@ serviceRouter.get(
       });
       if (!isvehicleidvalid) {
         //throw new Error("Vehicle not found in your garage list!");
-        return res.status(200).json({
+        return res.status(206).json({
           status: "Ok",
           message:
             "Vehicle not found in your garage. You can add this as a new vehicle.",
